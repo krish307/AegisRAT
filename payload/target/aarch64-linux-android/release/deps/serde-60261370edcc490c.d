@@ -1,0 +1,14 @@
+C:\Users\sansi\aegisrat\payload\target\aarch64-linux-android\release\deps\serde-60261370edcc490c.d: C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\lib.rs C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\integer128.rs C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\mod.rs C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\de.rs C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\ser.rs C:\Users\sansi\aegisrat\payload\target\aarch64-linux-android\release\build\serde-201c6bc57e578c7a\out/private.rs
+
+C:\Users\sansi\aegisrat\payload\target\aarch64-linux-android\release\deps\libserde-60261370edcc490c.rlib: C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\lib.rs C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\integer128.rs C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\mod.rs C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\de.rs C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\ser.rs C:\Users\sansi\aegisrat\payload\target\aarch64-linux-android\release\build\serde-201c6bc57e578c7a\out/private.rs
+
+C:\Users\sansi\aegisrat\payload\target\aarch64-linux-android\release\deps\libserde-60261370edcc490c.rmeta: C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\lib.rs C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\integer128.rs C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\mod.rs C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\de.rs C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\ser.rs C:\Users\sansi\aegisrat\payload\target\aarch64-linux-android\release\build\serde-201c6bc57e578c7a\out/private.rs
+
+C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\lib.rs:
+C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\integer128.rs:
+C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\mod.rs:
+C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\de.rs:
+C:\Users\sansi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\ser.rs:
+C:\Users\sansi\aegisrat\payload\target\aarch64-linux-android\release\build\serde-201c6bc57e578c7a\out/private.rs:
+
+# env-dep:OUT_DIR=C:\\Users\\sansi\\aegisrat\\payload\\target\\aarch64-linux-android\\release\\build\\serde-201c6bc57e578c7a\\out

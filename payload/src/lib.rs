@@ -34,29 +34,7 @@ pub fn register_stream_sender(tx: mpsc::UnboundedSender<Vec<u8>>) {
     let mut lock = STREAM_TX.lock().unwrap();
     *lock = Some(tx);
 }
-#[no_mangle]
-pub extern "system" fn Java_com_aegis_rat_AegisCore_nativeStreamFrame(
-    mut env: JNIEnv,
-    _class: JClass,
-    data: jni::objects::JByteArray,
-) {
-    // 1. Convert Java byte[] to Rust Vec<u8>
-    let bytes: Vec<u8> = env.convert_local_ref_to_slice(&data)
-        .ok()
-        .map(|slice| slice.to_vec())
-        .unwrap_or_default();
 
-    if bytes.is_empty() {
-        return;
-    }
-
-    // 2. Get the active sender
-    let sender_lock = STREAM_TX.lock().unwrap();
-    if let Some(sender) = sender_lock.as_ref() {
-        // Send the frame. If the channel is full or closed, drop the frame.
-        let _ = sender.send(bytes);
-    }
-}
 #[no_mangle]
 pub extern "system" fn Java_com_aegis_rat_AegisCore_nativeInit(
     mut env: JNIEnv,

@@ -34,7 +34,6 @@ fn attach_jvm() -> Result<jni::JNIEnv, String> {
 // --- SHELL EXECUTION (REAL) ---
 
 /// Executes a shell command using the Android `sh` (mksh) shell.
-/// This allows running any system command: ls, cat, ps, dumpsys, etc.
 pub fn execute_shell(script: &str) -> Value {
     if script.is_empty() {
         return json!({"error": "Empty script"});
@@ -58,15 +57,12 @@ pub fn execute_shell(script: &str) -> Value {
 // --- FILESYSTEM (REAL) ---
 
 /// Maps a path to the correct Android storage path.
-/// Handles Scoped Storage by mapping /sdcard to /storage/emulated/0
 fn resolve_path(path: &str) -> String {
     if path.starts_with("/sdcard") {
         path.replace("/sdcard", "/storage/emulated/0")
     } else if path.starts_with("/storage") {
         path.to_string()
     } else {
-        // If it's a relative path, assume it's in the app's private dir or /data/local/tmp
-        // For simplicity, we treat it as an absolute path or prepend /storage/emulated/0
         if path.starts_with('/') {
             path.to_string()
         } else {
@@ -113,7 +109,6 @@ pub fn write_file(path: &str, content: &str) -> Value {
 
 pub fn delete_file(path: &str) -> Value {
     let target_path = resolve_path(path);
-    // Try file first, then directory
     match fs::remove_file(target_path) {
         Ok(_) => json!({"status": "ok", "path": target_path}),
         Err(_) => {
@@ -130,20 +125,16 @@ pub fn delete_file(path: &str) -> Value {
 pub fn read_sms(args: &Value) -> Value {
     let limit = args.get("limit").and_then(|s| s.as_u64()).unwrap_or(10) as i32;
     
-    // 1. Get Context
     let context = match get_context() {
         Ok(c) => c,
         Err(e) => return json!({"error": e, "messages": vec![]}),
     };
 
-    // 2. Attach to JVM
     let env = match attach_jvm() {
         Ok(e) => e,
         Err(e) => return json!({"error": e, "messages": vec![]}),
     };
 
-    // 3. Call Java Method
-    // Java Signature: public static String nativeReadSms(Context context, int limit)
     let result = call_java_static(
         &env,
         "nativeReadSms",
@@ -152,29 +143,22 @@ pub fn read_sms(args: &Value) -> Value {
     );
 
     match result {
-        Ok(sms_str) => {
-            // Parse the JSON string from Java into a Value
-            serde_json::from_str(&sms_str).unwrap_or(json!({"error": "Failed to parse SMS JSON", "messages": vec![]}))
-        }
+        Ok(sms_str) => serde_json::from_str(&sms_str).unwrap_or(json!({"error": "Failed to parse SMS JSON", "messages": vec![]})),
         Err(e) => json!({"error": e, "messages": vec![]})
     }
 }
 
 pub fn get_location(args: &Value) -> Value {
-    // 1. Get Context
     let context = match get_context() {
         Ok(c) => c,
         Err(e) => return json!({"error": e}),
     };
 
-    // 2. Attach to JVM
     let env = match attach_jvm() {
         Ok(e) => e,
         Err(e) => return json!({"error": e}),
     };
 
-    // 3. Call Java Method
-    // Java Signature: public static String nativeGetRealLocation(Context context)
     let result = call_java_static(
         &env,
         "nativeGetRealLocation",
@@ -183,29 +167,22 @@ pub fn get_location(args: &Value) -> Value {
     );
 
     match result {
-        Ok(loc_str) => {
-            // Parse the JSON string from Java into a Value
-            serde_json::from_str(&loc_str).unwrap_or(json!({"error": "Failed to parse Location JSON"}))
-        }
+        Ok(loc_str) => serde_json::from_str(&loc_str).unwrap_or(json!({"error": "Failed to parse Location JSON"})),
         Err(e) => json!({"error": e})
     }
 }
 
 pub fn get_battery(_args: &Value) -> Value {
-    // 1. Get Context
     let context = match get_context() {
         Ok(c) => c,
         Err(e) => return json!({"error": e}),
     };
 
-    // 2. Attach to JVM
     let env = match attach_jvm() {
         Ok(e) => e,
         Err(e) => return json!({"error": e}),
     };
 
-    // 3. Call Java Method
-    // Java Signature: public static String nativeGetBattery(Context context)
     let result = call_java_static(
         &env,
         "nativeGetBattery",
@@ -214,18 +191,12 @@ pub fn get_battery(_args: &Value) -> Value {
     );
 
     match result {
-        Ok(batt_str) => {
-            // Parse the JSON string from Java into a Value
-            serde_json::from_str(&batt_str).unwrap_or(json!({"error": "Failed to parse Battery JSON"}))
-        }
+        Ok(batt_str) => serde_json::from_str(&batt_str).unwrap_or(json!({"error": "Failed to parse Battery JSON"})),
         Err(e) => json!({"error": e})
     }
 }
 
-// --- SYSTEM INFO (REAL) ---
-
 pub fn get_system_info() -> Value {
-    // This calls the Java side to get real system info
     let context = match get_context() {
         Ok(c) => c,
         Err(e) => return json!({"error": e}),
@@ -236,12 +207,6 @@ pub fn get_system_info() -> Value {
         Err(e) => return json!({"error": e}),
     };
 
-    // Java Signature: public static String nativeGetSystemInfo(Context context)
-    // You need to add this method to AegisCore.java as well.
-    // For now, we will return a basic info using existing statics if available, 
-    // or call a new Java method.
-    // Let's assume we have a nativeGetSystemInfo method.
-    
     let result = call_java_static(
         &env,
         "nativeGetSystemInfo",

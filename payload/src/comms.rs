@@ -6,7 +6,7 @@ use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::Message;
 use futures::{SinkExt, StreamExt};
 use tokio::sync::mpsc::UnboundedSender;
-use once_cell::sync::Lazy;
+
 use std::sync::Mutex;
 
 static WS_STREAM_TX: Lazy<Mutex<Option<UnboundedSender<Vec<u8>>>>> = Lazy::new(|| Mutex::new(None));
